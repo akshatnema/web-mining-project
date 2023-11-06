@@ -1,8 +1,9 @@
 const { google } = require('googleapis');
-const fs = require('fs');
+const dotenv = require('dotenv');
 
-const DEVELOPER_KEY = "YOUR_API_KEY";
-const YOUTUBE_API_SERVICE_NAME = "youtube";
+dotenv.config();
+
+const DEVELOPER_KEY = process.env.API_KEY;
 const YOUTUBE_API_VERSION = "v3";
 
 const youtube = google.youtube({
@@ -19,3 +20,4 @@ const fun = async () => {
       console.log(res)
 } 
 
+fun();

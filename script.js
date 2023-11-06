@@ -1,8 +1,10 @@
-const { google } = require('googleapis');
+const {google} = require('googleapis');
 const fs = require('fs');
+const dotenv = require('dotenv');
 
-const DEVELOPER_KEY = "YOUR_API_KEY";
-const YOUTUBE_API_SERVICE_NAME = "youtube";
+dotenv.config();
+
+const DEVELOPER_KEY = process.env.API_KEY;
 const YOUTUBE_API_VERSION = "v3";
 
 const youtube = google.youtube({
@@ -25,13 +27,13 @@ async function youtube_search(options) {
     // Define the search function
     async function search() {
 
-        youtube.search.list({
-            q: options.q,
-            part: "id,snippet",
-            maxResults: options.max_results,
-            pageToken: nextPageToken
-        }, (err, search_response) => {
-            if (err) return console.error(err);
+        try {
+            const search_response = await youtube.search.list({
+                q: options.q,
+                part: "id,snippet",
+                maxResults: options.max_results,
+                pageToken: nextPageToken
+            });
 
             if (search_response.data.items) {
                 request_count += search_response.data.items.length;
@@ -55,7 +57,7 @@ async function youtube_search(options) {
                                 rej(err)
                             }
                         })
-                        console.log(videoPromise)
+                        // console.log(videoPromise)
                         promises.push(videoPromise)
 
                         const channelPromise = new Promise((res, rej) => {
@@ -69,49 +71,55 @@ async function youtube_search(options) {
                                 rej(err)
                             }
                         })
+                        // console.log(channelPromise)
                         promises.push(channelPromise)
 
-                        // youtube.videos.list({
-                        //   id: videoId,
-                        //   part: "statistics"
-                        // }, (err, video_response) => {
-                        //   if (err) return console.error(err);
+                        youtube.videos.list({
+                          id: videoId,
+                          part: "statistics"
+                        }, (err, video_response) => {
+                          if (err) return console.error(err);
 
-                        //   const video_result = video_response.data.items[0];
-                        //   const viewCount = video_result.statistics.viewCount || 0;
-                        //   const likeCount = video_result.statistics.likeCount || 0;
-                        //   const dislikeCount = video_result.statistics.dislikeCount || 0;
-                        //   const commentCount = video_result.statistics.commentCount || 0;
+                          const video_result = video_response.data.items[0];
+                          const viewCount = video_result.statistics.viewCount || 0;
+                          const likeCount = video_result.statistics.likeCount || 0;
+                          const dislikeCount = video_result.statistics.dislikeCount || 0;
+                          const commentCount = video_result.statistics.commentCount || 0;
 
-                        //   youtube.channels.list({
-                        //     id: search_result.snippet.channelId,
-                        //     part: "snippet,statistics"
-                        //   }, (err, channel_response) => {
-                        //     if (err) return console.error(err);
+                          youtube.channels.list({
+                            id: search_result.snippet.channelId,
+                            part: "snippet,statistics"
+                          }, (err, channel_response) => {
+                            if (err) return console.error(err);
 
-                        //     const channel_result = channel_response.data.items[0];
-                        //     const channelTitle = channel_result.snippet.title.replace(/[^a-zA-Z0-9 ]/g, '');
-                        //     const viewCCount = channel_result.statistics.viewCount || 0;
-                        //     const commentCCount = channel_result.statistics.commentCount || 0;
-                        //     const subscriberCount = channel_result.statistics.subscriberCount || 0;
+                            const channel_result = channel_response.data.items[0];
+                            const channelTitle = channel_result.snippet.title.replace(/[^a-zA-Z0-9 ]/g, '');
+                            const viewCCount = channel_result.statistics.viewCount || 0;
+                            const commentCCount = channel_result.statistics.commentCount || 0;
+                            const subscriberCount = channel_result.statistics.subscriberCount || 0;
 
-                        //     const row = [title, description, videoId, viewCount, likeCount, dislikeCount, commentCount, channelTitle, viewCCount, commentCCount, subscriberCount];
-                        //     csvFile.write(row.join(',') + '\n');
-                        //   });
-                        // });
-                        allPromises.push(promises)
+                            const row = [title, description, videoId, viewCount, likeCount, dislikeCount, commentCount, channelTitle, viewCCount, commentCCount, subscriberCount];
+                            csvFile.write(row.join(',') + '\n');
+                          });
+                        });
+                        allPromises.push(Promise.all(promises))
+                        // console.log(promises)
                     }
                 }
 
-                // nextPageToken = search_response.data.nextPageToken;
-                // if (request_count < max_results && nextPageToken) {
-                //   search(); // Continue searching if not yet reached max results
-                // } else {
-                //   csvFile.end(); // Close the CSV file
-                // }
-                if(request_count > max_results) return ;
+                nextPageToken = search_response.data.nextPageToken;
+                if (request_count < max_results && nextPageToken) {
+                  search(); // Continue searching if not yet reached max results
+                } else {
+                  csvFile.end(); // Close the CSV file
+                }
+                if (request_count > max_results) return;
             }
-        });
+
+            console.log('searching')
+        } catch (e) {
+            console.log(e)
+        }
     }
 
     await search(); // Start the initial search
