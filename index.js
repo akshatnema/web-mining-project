@@ -1,7 +1,7 @@
 const { google } = require('googleapis');
 const fs = require('fs');
 
-const DEVELOPER_KEY = "AIzaSyCo3QHlvMXuq6EKoccvAUCahA3WlUfzWVw";
+const DEVELOPER_KEY = "YOUR_API_KEY";
 const YOUTUBE_API_SERVICE_NAME = "youtube";
 const YOUTUBE_API_VERSION = "v3";
 
