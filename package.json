@@ -1,0 +1,15 @@
+{
+  "name": "project",
+  "version": "1.0.0",
+  "description": "<h2>1. Data extraction using the search_keyword.py script:</h2>   Using the Youtube API v3, data has been extracted for a particular keyword by giving command-line parameters. I have  collected data for ~500 videos for a particular keyword (in my case \"ted\").",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "googleapis": "^128.0.0"
+  }
+}
