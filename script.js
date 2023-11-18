@@ -14,19 +14,19 @@ const youtube = google.youtube({
 });
 
 const csvWriter = createCsvWriter({
-    path: 'output.csv',
+    path: 'video_result.csv',
     header: [
-    { id: 'title', title: 'Title' },
-    { id: 'description', title: 'Description' },
-    { id: 'videoId', title: 'VideoId' },
-    { id: 'viewCount', title: 'ViewCount' },
-    { id: 'likeCount', title: 'LikeCount' },
-    { id: 'dislikeCount', title: 'DislikeCount' },
-    { id: 'commentCount', title: 'CommentCount' },
-    { id: 'channelTitle', title: 'ChannelTitle' },
-    { id: 'viewCCount', title: 'ViewCCount' },
-    { id: 'commentCCount', title: 'CommentCCount' },
-    { id: 'subscriberCount', title: 'SubscriberCount' },
+        {id: 'title', title: 'Title'},
+        {id: 'description', title: 'Description'},
+        {id: 'videoId', title: 'VideoId'},
+        {id: 'viewCount', title: 'ViewCount'},
+        {id: 'likeCount', title: 'LikeCount'},
+        {id: 'dislikeCount', title: 'DislikeCount'},
+        {id: 'commentCount', title: 'CommentCount'},
+        {id: 'channelTitle', title: 'ChannelTitle'},
+        {id: 'viewCCount', title: 'ViewCCount'},
+        {id: 'commentCCount', title: 'CommentCCount'},
+        {id: 'subscriberCount', title: 'SubscriberCount'},
     ],
 });
 
@@ -91,7 +91,7 @@ async function youtube_search(options) {
                         })
                         // console.log(channelPromise)
                         promises.push(channelPromise)
-                        
+
                         allPromises.push({title, description, videoId, promises: promises})
                         // console.log(promises)
                     }
@@ -99,9 +99,9 @@ async function youtube_search(options) {
 
                 nextPageToken = search_response.data.nextPageToken;
                 if (request_count < max_results && nextPageToken) {
-                  search(); // Continue searching if not yet reached max results
+                    search(); // Continue searching if not yet reached max results
                 } else {
-                //   csvFile.end(); // Close the CSV file
+                    //   csvFile.end(); // Close the CSV file
                 }
                 if (request_count > max_results) return;
             }
@@ -115,35 +115,47 @@ async function youtube_search(options) {
     await search(); // Start the initial search
     // console.log(allPromises)
     const data = [];
-    await Promise.all(allPromises).then((promises) => {
-        promises.forEach((videoPromise) => {
-            const title = videoPromise.title;
-            const description = videoPromise.description;
-            const videoId = videoPromise.videoId;
-            
-            Promise.all(videoPromise.promises).then((apiData) => {
-                const video_result = apiData[0].data.items[0];
-                const viewCount = video_result.statistics.viewCount || 0;
-                const likeCount = video_result.statistics.likeCount || 0;
-                const dislikeCount = video_result.statistics.dislikeCount || 0;
-                const commentCount = video_result.statistics.commentCount || 0;
+    const promises = await Promise.all(allPromises);
+    // console.log(promises);
 
-                const channel_result = apiData[1].data.items[0];
-                const channelTitle = channel_result.snippet.title.replace(/[^a-zA-Z0-9 ]/g, '');
-                const viewCCount = channel_result.statistics.viewCount || 0;
-                const commentCCount = channel_result.statistics.commentCount || 0;
-                const subscriberCount = channel_result.statistics.subscriberCount || 0;
+    for (let videoPromise of promises) {
+        const title = videoPromise.title;
+        const description = videoPromise.description;
+        const videoId = videoPromise.videoId;
 
-                const videoObject = {title, description, videoId, viewCount, likeCount, dislikeCount, commentCount, channelTitle, viewCCount, commentCCount, subscriberCount}
-                console.log(videoObject)
-                data.push(videoObject)
-            })
-        })
-        console.log("hello")
-    })
+        const apiData = await Promise.all(videoPromise.promises)
+        const video_result = apiData[0].data.items[0];
+        const viewCount = video_result.statistics.viewCount || 0;
+        const likeCount = video_result.statistics.likeCount || 0;
+        const dislikeCount = video_result.statistics.dislikeCount || 0;
+        const commentCount = video_result.statistics.commentCount || 0;
+
+        const channel_result = apiData[1].data.items[0];
+        const channelTitle = channel_result.snippet.title.replace(/[^a-zA-Z0-9 ]/g, '');
+        const viewCCount = channel_result.statistics.viewCount || 0;
+        const commentCCount = channel_result.statistics.commentCount || 0;
+        const subscriberCount = channel_result.statistics.subscriberCount || 0;
+
+        const videoObject = {
+            title,
+            description,
+            videoId,
+            viewCount,
+            likeCount,
+            dislikeCount,
+            commentCount,
+            channelTitle,
+            viewCCount,
+            commentCCount,
+            subscriberCount
+        }
+        // console.log(videoObject)
+        data.push(videoObject)
+    }
+    console.log("hello")
     console.log(data)
-    // const res = await csvWriter.writeRecords(data)
-    // console.log(res)
+    const res = await csvWriter.writeRecords(data)
+    console.log(res)
 }
 
 const options = {
